@@ -1,0 +1,7 @@
+gcc -c some.c // скомпилировать some.c в some.o (объектный файл)
+
+gcc some1.o some2.o -o result // объединить объектные файлы в один
+
+chmod u+rwx result // выдать все права
+
+./result // запустить

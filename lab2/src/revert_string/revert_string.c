@@ -2,6 +2,10 @@
 
 void RevertString(char *str)
 {
-	// your code here
+	int len = strlen(str);
+
+	for(int i = 0; i < len / 2; i++) {
+		Swap(&str[i], &str[len - i - 1]);
+	}
 }
 
