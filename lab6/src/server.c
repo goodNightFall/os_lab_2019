@@ -13,11 +13,15 @@
 
 #include "pthread.h"
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 struct FactorialArgs {
   uint64_t begin;
   uint64_t end;
   uint64_t mod;
 };
+
+long long int result = 1;
 
 uint64_t MultModulo(uint64_t a, uint64_t b, uint64_t mod) {
   uint64_t result = 0;
@@ -35,7 +39,18 @@ uint64_t MultModulo(uint64_t a, uint64_t b, uint64_t mod) {
 uint64_t Factorial(const struct FactorialArgs *args) {
   uint64_t ans = 1;
 
-  // TODO: your code here
+  int begin = args->begin;
+  int end = args->end;
+  int mod = args->mod;
+
+  for (int i = begin; i <= end; i++) {
+      ans = (ans * i);
+  }
+
+  pthread_mutex_lock(&mutex);
+  result = result * ans;
+  pthread_mutex_unlock(&mutex);
+  printf("Thread %lu: (%d, %d) result = %d\n", pthread_self(), begin, end, ans);
 
   return ans;
 }
@@ -67,11 +82,9 @@ int main(int argc, char **argv) {
       switch (option_index) {
       case 0:
         port = atoi(optarg);
-        // TODO: your code here
         break;
       case 1:
         tnum = atoi(optarg);
-        // TODO: your code here
         break;
       default:
         printf("Index %d is out of options\n", option_index);
@@ -154,13 +167,14 @@ int main(int argc, char **argv) {
       memcpy(&end, from_client + sizeof(uint64_t), sizeof(uint64_t));
       memcpy(&mod, from_client + 2 * sizeof(uint64_t), sizeof(uint64_t));
 
-      fprintf(stdout, "Receive: %llu %llu %llu\n", begin, end, mod);
+      fprintf(stdout, "\nReceive: %llu %llu %llu\n", begin, end, mod);
 
       struct FactorialArgs args[tnum];
+      int chunk = (end - begin + 1) / tnum;
       for (uint32_t i = 0; i < tnum; i++) {
-        // TODO: parallel somehow
-        args[i].begin = 1;
-        args[i].end = 1;
+        // TODO: parallel somehow: Done
+        args[i].begin = i * chunk + begin;
+        args[i].end = (i == tnum - 1) ? end : (i + 1) * chunk + begin - 1;
         args[i].mod = mod;
 
         if (pthread_create(&threads[i], NULL, ThreadFactorial,
@@ -174,10 +188,12 @@ int main(int argc, char **argv) {
       for (uint32_t i = 0; i < tnum; i++) {
         uint64_t result = 0;
         pthread_join(threads[i], (void **)&result);
-        total = MultModulo(total, result, mod);
+        printf("result = %lu\n", result);
+        // total = MultModulo(total, result, mod);
+        total *= result;
       }
 
-      printf("Total: %llu\n", total);
+      printf("Total: %llu\n\n", total);
 
       char buffer[sizeof(total)];
       memcpy(buffer, &total, sizeof(total));

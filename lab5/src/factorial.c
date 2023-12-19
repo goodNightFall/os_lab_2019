@@ -23,12 +23,10 @@ void partial_factorial(void *args) {
 
   long long partial_result = 1;
 
-  // Вычисление части факториала для данного потока
   for (int i = start; i <= end; i++) {
     partial_result = (partial_result * i);
   }
 
-  // Захватываем мьютекс для обновления глобального результата
   pthread_mutex_lock(&mutex);
   result = (result * partial_result);
   pthread_mutex_unlock(&mutex);
@@ -71,18 +69,14 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  // Проверка наличия всех необходимых параметров
   if (k == -1 || pnum == -1 || mod == -1) {
     fprintf(stderr, "Usage: %s -k <number> --pnum=<threads> --mod=<modulus>\n", argv[0]);
     exit(EXIT_FAILURE);
   }
 
-  // Массив идентификаторов потоков
   pthread_t threads[pnum];
-  // Массив структур для передачи параметров в потоки
   struct ThreadData thread_data[pnum];
 
-  // Создание потоков
 
   int start_counter = 1;
   int end_counter = 1;
@@ -108,7 +102,6 @@ int main(int argc, char* argv[]) {
     start_counter = end_counter + 1;
   }
 
-  // Ожидание завершения всех потоков
   for (int i = 0; i < pnum; i++) {
     if (pthread_join(threads[i], NULL) != 0) {
       perror("pthread_join");
@@ -116,7 +109,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  // Захватываем мьютекс для безопасного доступа к результату
   pthread_mutex_lock(&mutex);
   long long final_result = result % mod;
   pthread_mutex_unlock(&mutex);
